@@ -1,33 +1,35 @@
-# app/streamlit_app.py
+# streamlit_app.py
 
 import streamlit as st
 import pandas as pd
+import joblib
 from pathlib import Path
-import sys
 
-# Make src importable
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT))
+MODEL_PATH = "models/best_model.pkl"
 
-from src.utils import load_trained_model, make_prediction
-
-st.set_page_config(page_title="Online Shopping Intention Analysis", layout="centered")
 
 @st.cache_resource
-def get_model():
-    return load_trained_model()
+def load_model():
+    model = joblib.load(MODEL_PATH)
+    return model
 
-model = get_model()
+
+model = load_model()
+
+st.set_page_config(
+    page_title="Online Shopping Intention Analysis",
+    layout="centered",
+)
 
 st.title("🛒 Online Shopping Intention Analysis")
 st.write(
-    "Predict whether an online shopper is likely to **complete a purchase** "
+    "This app predicts whether an online shopper is likely to **complete a purchase** "
     "based on their session behavior."
 )
 
-st.sidebar.header("Session Features")
+st.sidebar.header("Enter Session Details")
 
-# Example inputs (match your dataset!)
+# --- Inputs (match your dataset columns) ---
 administrative = st.sidebar.number_input("Administrative pages", min_value=0, max_value=30, value=2)
 administrative_duration = st.sidebar.number_input("Administrative Duration", min_value=0.0, value=20.0)
 informational = st.sidebar.number_input("Informational pages", min_value=0, max_value=30, value=1)
@@ -37,21 +39,22 @@ product_related_duration = st.sidebar.number_input("Product Related Duration", m
 bounce_rates = st.sidebar.number_input("Bounce Rates", min_value=0.0, max_value=1.0, value=0.02, step=0.01, format="%.3f")
 exit_rates = st.sidebar.number_input("Exit Rates", min_value=0.0, max_value=1.0, value=0.05, step=0.01, format="%.3f")
 page_values = st.sidebar.number_input("Page Values", min_value=0.0, value=10.0)
-special_day = st.sidebar.number_input("Special Day proximity", min_value=0.0, max_value=1.0, value=0.0)
+special_day = st.sidebar.number_input("Special Day (0–1, proximity to a special day)", min_value=0.0, max_value=1.0, value=0.0)
 
-month = st.sidebar.selectbox("Month", [
-    "Jan", "Feb", "Mar", "Apr", "May", "June",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-])
+month = st.sidebar.selectbox(
+    "Month",
+    ["Jan", "Feb", "Mar", "Apr", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+)
 
 operating_systems = st.sidebar.selectbox("Operating System", [1, 2, 3, 4, 5, 6, 7, 8])
-browser = st.sidebar.selectbox("Browser", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
-region = st.sidebar.selectbox("Region", [1, 2, 3, 4, 5, 6, 7, 8, 9])
-traffic_type = st.sidebar.selectbox("Traffic Type", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+browser = st.sidebar.selectbox("Browser", list(range(1, 14)))
+region = st.sidebar.selectbox("Region", list(range(1, 10)))
+traffic_type = st.sidebar.selectbox("Traffic Type", list(range(1, 21)))
 
 visitor_type = st.sidebar.selectbox("Visitor Type", ["New_Visitor", "Returning_Visitor", "Other"])
 weekend = st.sidebar.selectbox("Weekend?", [False, True])
 
+# Build row as dataframe
 input_data = {
     "Administrative": administrative,
     "Administrative_Duration": administrative_duration,
@@ -72,14 +75,17 @@ input_data = {
     "Weekend": weekend,
 }
 
-st.subheader("Input Summary")
-st.write(pd.DataFrame([input_data]).T.rename(columns={0: "Value"}))
+st.subheader("Current Input")
+st.write(pd.DataFrame([input_data]))
 
 if st.button("Predict Purchase Intention"):
-    pred, proba = make_prediction(model, input_data)
-    if pred == 1:
-        st.success(f"✅ The model predicts the user is **likely to buy** (probability: {proba:.2%})")
-    else:
-        st.warning(f"❌ The model predicts the user is **unlikely to buy** (probability of purchase: {proba:.2%})")
+    X_input = pd.DataFrame([input_data])
+    proba = model.predict_proba(X_input)[0][1]
+    pred = int(proba >= 0.5)
 
-    st.caption("This is a machine learning prediction, not a guarantee.")
+    if pred == 1:
+        st.success(f"✅ The user is **likely to make a purchase**.\n\nPurchase probability: **{proba:.2%}**")
+    else:
+        st.warning(f"❌ The user is **unlikely to make a purchase**.\n\nPurchase probability: **{proba:.2%}**")
+
+    st.caption("Note: This is a machine learning prediction, not a guarantee.")
