@@ -12,7 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_auc_score
 
 RANDOM_STATE = 42
-DATA_PATH = "data/online_shoppers_intention.csv"
+DATA_PATH = "online_shoppers_intention.csv"
 MODEL_PATH = "best_model (2).pkl"
 
 
