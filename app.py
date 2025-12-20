@@ -5,7 +5,7 @@ import pandas as pd
 import joblib 
 from pathlib import Path
 
-MODEL_PATH = "models/best_model.pkl"
+MODEL_PATH = "models/best_model.pkl" 
 
 
 @st.cache_resource 
