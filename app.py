@@ -8,7 +8,7 @@ from pathlib import Path
 MODEL_PATH = "models/best_model.pkl"
 
 
-@st.cache_resource
+@st.cache_resource 
 def load_model():
     model = joblib.load(MODEL_PATH)
     return model
