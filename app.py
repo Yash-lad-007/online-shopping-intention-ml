@@ -2,7 +2,7 @@
 
 import streamlit as st
 import pandas as pd
-import joblib
+import joblib 
 from pathlib import Path
 
 MODEL_PATH = "models/best_model.pkl"
