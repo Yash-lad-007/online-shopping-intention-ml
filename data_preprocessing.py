@@ -13,7 +13,7 @@ def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     return df
 
-def get_features_target(df: pd.DataFrame):
+def get_features_target(df: pd.DataFrame): 
     """
     Assumes target column is 'Revenue' (True/False).
     Adjust if your dataset uses something else.
